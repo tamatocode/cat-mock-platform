@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, ChevronLeft, Check, Search, ToggleLeft, ToggleRight, BookOpen, AlertCircle } from 'lucide-react';
 import PageShell from '../components/layout/PageShell';
@@ -454,6 +454,16 @@ export default function CreateTest() {
       </div>
     );
   };
+
+  if (loading) {
+    return (
+      <PageShell title="Create Mock Test" subtitle="Design a custom test session from your question bank">
+        <div className="flex justify-center py-20">
+          <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </PageShell>
+    );
+  }
 
   return (
     <PageShell title="Create Mock Test" subtitle="Design a custom test session from your question bank">
