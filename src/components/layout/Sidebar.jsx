@@ -1,20 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Library, PlusCircle, FilePlus, FileText, GraduationCap, Menu, X } from 'lucide-react';
-import { getStorageUsage } from '../../lib/storage';
 import { cn } from '../../lib/utils';
 
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
-  const [storage, setStorage] = useState({ percentage: 0, usedMB: 0, maxMB: 5 });
-
-  useEffect(() => {
-    // Update storage info periodically
-    const updateStorage = () => setStorage(getStorageUsage());
-    updateStorage();
-    const interval = setInterval(updateStorage, 5000);
-    return () => clearInterval(interval);
-  }, []);
 
   const navLinks = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -54,7 +44,7 @@ export default function Sidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
+        <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1 custom-scrollbar">
           {navLinks.map((link) => (
             <NavLink
               key={link.to}
@@ -72,23 +62,6 @@ export default function Sidebar() {
             </NavLink>
           ))}
         </nav>
-
-        {/* Storage Bar */}
-        <div className="p-4 border-t border-border">
-          <div className="flex justify-between items-center text-xs text-text-secondary mb-2">
-            <span>Storage Usage</span>
-            <span>{storage.usedMB}MB / {storage.maxMB}MB</span>
-          </div>
-          <div className="h-2 w-full bg-bg rounded-full overflow-hidden">
-            <div 
-              className={cn(
-                "h-full transition-all duration-500",
-                storage.percentage > 80 ? "bg-error" : storage.percentage > 50 ? "bg-warning" : "bg-accent"
-              )}
-              style={{ width: `${storage.percentage}%` }}
-            />
-          </div>
-        </div>
       </aside>
     </>
   );

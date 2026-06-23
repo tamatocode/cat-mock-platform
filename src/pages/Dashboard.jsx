@@ -21,44 +21,59 @@ export default function Dashboard() {
   const [recentAttempts, setRecentAttempts] = useState([]);
   const [distribution, setDistribution] = useState([]);
 
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    const questions = getQuestions();
-    const tests = getTests();
-    const attempts = getAttempts();
+    const loadData = async () => {
+      const questions = await getQuestions();
+      const tests = await getTests();
+      const attempts = await getAttempts();
 
-    // Calculate Avg Score
-    let avgScore = 'N/A';
-    if (attempts.length > 0) {
-      const totalScore = attempts.reduce((acc, att) => acc + (att.score?.total || 0), 0);
-      avgScore = (totalScore / attempts.length).toFixed(1);
-    }
-
-    setStats({
-      questions: questions.length,
-      tests: tests.length,
-      attempts: attempts.length,
-      avgScore
-    });
-
-    // Recent Attempts
-    const sortedAttempts = [...attempts].sort((a, b) => b.endTime - a.endTime).slice(0, 3);
-    setRecentAttempts(sortedAttempts);
-
-    // Distribution
-    const distMap = { VARC: 0, DILR: 0, QA: 0 };
-    questions.forEach(q => {
-      if (distMap[q.section] !== undefined) {
-        distMap[q.section]++;
+      // Calculate Avg Score
+      let avgScore = 'N/A';
+      if (attempts.length > 0) {
+        const totalScore = attempts.reduce((acc, att) => acc + (att.score?.total || 0), 0);
+        avgScore = (totalScore / attempts.length).toFixed(1);
       }
-    });
 
-    setDistribution([
-      { label: 'VARC', value: distMap.VARC, color: SECTION_INFO.VARC.color },
-      { label: 'DILR', value: distMap.DILR, color: SECTION_INFO.DILR.color },
-      { label: 'QA', value: distMap.QA, color: SECTION_INFO.QA.color },
-    ]);
+      setStats({
+        questions: questions.length,
+        tests: tests.length,
+        attempts: attempts.length,
+        avgScore
+      });
 
+      // Recent Attempts
+      const sortedAttempts = [...attempts].sort((a, b) => b.endTime - a.endTime).slice(0, 3);
+      setRecentAttempts(sortedAttempts);
+
+      // Distribution
+      const distMap = { VARC: 0, DILR: 0, QA: 0 };
+      questions.forEach(q => {
+        if (distMap[q.section] !== undefined) {
+          distMap[q.section]++;
+        }
+      });
+
+      setDistribution([
+        { label: 'VARC', value: distMap.VARC, color: SECTION_INFO.VARC.color },
+        { label: 'DILR', value: distMap.DILR, color: SECTION_INFO.DILR.color },
+        { label: 'QA', value: distMap.QA, color: SECTION_INFO.QA.color },
+      ]);
+      setLoading(false);
+    };
+    loadData();
   }, []);
+
+  if (loading) {
+    return (
+      <PageShell>
+        <div className="flex justify-center items-center h-[60vh]">
+          <div className="w-12 h-12 border-4 border-accent border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </PageShell>
+    );
+  }
 
   return (
     <PageShell>

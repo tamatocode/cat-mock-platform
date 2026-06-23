@@ -17,26 +17,31 @@ export default function ResultPage() {
   const [attempt, setAttempt] = useState(null);
   const [test, setTest] = useState(null);
   const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const att = getAttemptById(id);
-    if (!att) {
-      navigate('/tests');
-      return;
-    }
-    
-    const t = getTestById(att.testId);
-    if (!t) {
-      navigate('/tests');
-      return;
-    }
+    const loadData = async () => {
+      const att = await getAttemptById(id);
+      if (!att) {
+        navigate('/tests');
+        return;
+      }
+      
+      const t = await getTestById(att.testId);
+      if (!t) {
+        navigate('/tests');
+        return;
+      }
 
-    const allQIds = t.sections.flatMap(s => s.questionIds);
-    const qs = getQuestionsByIds(allQIds);
+      const allQIds = t.sections.flatMap(s => s.questionIds);
+      const qs = await getQuestionsByIds(allQIds);
 
-    setAttempt(att);
-    setTest(t);
-    setQuestions(qs);
+      setAttempt(att);
+      setTest(t);
+      setQuestions(qs);
+      setLoading(false);
+    };
+    loadData();
   }, [id, navigate]);
 
   const difficultyData = useMemo(() => {
@@ -74,6 +79,16 @@ export default function ResultPage() {
       { label: 'Hard Wrong', value: diffStats.Hard.w, color: '#EF4444' },
     ].filter(d => d.value > 0);
   }, [attempt, questions]);
+
+  if (loading) {
+    return (
+      <PageShell>
+        <div className="flex justify-center items-center h-[60vh]">
+          <div className="w-12 h-12 border-4 border-accent border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </PageShell>
+    );
+  }
 
   if (!attempt || !test) return null;
 

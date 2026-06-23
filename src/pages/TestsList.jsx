@@ -19,30 +19,46 @@ export default function TestsList() {
   const [attemptsMap, setAttemptsMap] = useState({});
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
 
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     loadTests();
   }, []);
 
-  const loadTests = () => {
-    const allTests = getTests().sort((a, b) => b.createdAt - a.createdAt);
+  const loadTests = async () => {
+    setLoading(true);
+    const ts = await getTests();
+    const allTests = ts.sort((a, b) => b.createdAt - a.createdAt);
     setTests(allTests);
     
     // Load attempts for each test to show status badge
     const map = {};
-    allTests.forEach(t => {
-      map[t.id] = getAttemptsByTestId(t.id).sort((a, b) => b.endTime - a.endTime);
-    });
+    for (const t of allTests) {
+      const atts = await getAttemptsByTestId(t.id);
+      map[t.id] = atts.sort((a, b) => b.endTime - a.endTime);
+    }
     setAttemptsMap(map);
+    setLoading(false);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (deleteConfirmId) {
-      deleteTest(deleteConfirmId);
+      await deleteTest(deleteConfirmId);
       toast.success('Test deleted successfully');
       setDeleteConfirmId(null);
       loadTests();
     }
   };
+
+  if (loading) {
+    return (
+      <PageShell>
+        <div className="flex justify-center items-center h-[60vh]">
+          <div className="w-12 h-12 border-4 border-accent border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </PageShell>
+    );
+  }
 
   if (tests.length === 0) {
     return (

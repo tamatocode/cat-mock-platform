@@ -37,22 +37,31 @@ export default function AddQuestion() {
     explanation: '',
   });
 
-  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(!!editId);
 
+  // Initialize from edit if needed
   useEffect(() => {
-    if (isEditMode) {
-      const q = getQuestionById(editId);
-      if (q) {
-        setFormData({
-          ...q,
-          tags: q.tags?.join(', ') || '',
-        });
-      } else {
-        toast.error('Question not found');
-        navigate('/add-question');
-      }
+    if (editId) {
+      const loadData = async () => {
+        const existing = await getQuestionById(editId);
+        if (existing) {
+          setFormData({
+            ...existing,
+            tags: existing.tags?.join(', ') || '',
+          });
+        } else {
+          toast.error('Question not found');
+          navigate('/question-bank');
+        }
+        setLoading(false);
+      };
+      loadData();
+    } else {
+      setLoading(false);
     }
-  }, [editId, navigate, toast, isEditMode]);
+  }, [editId, navigate, toast]);
+
+  const [errors, setErrors] = useState({});
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -95,7 +104,7 @@ export default function AddQuestion() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSave = (addAnother = false) => {
+  const handleSave = async (addAnother = false) => {
     if (!validate()) {
       toast.error('Please fix the errors before saving');
       return;
@@ -118,10 +127,10 @@ export default function AddQuestion() {
 
     let success = false;
     if (isEditMode) {
-      success = updateQuestion(editId, questionToSave);
+      success = await updateQuestion(editId, questionToSave);
       if (success) toast.success('Question updated successfully!');
     } else {
-      success = saveQuestion(questionToSave);
+      success = await saveQuestion(questionToSave);
       if (success) toast.success('Question added successfully!');
     }
 

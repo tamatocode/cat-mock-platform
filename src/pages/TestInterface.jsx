@@ -47,58 +47,62 @@ export default function TestInterface() {
 
   // Load Test Data
   useEffect(() => {
-    const t = getTestById(testId);
-    if (!t) {
-      toast.error('Test not found');
-      navigate('/tests');
-      return;
-    }
-    
-    // Check for in-progress test
-    const inProgress = getInProgressTest();
-    let initialResponses = {};
-    
-    if (inProgress && inProgress.testId === testId) {
-      if (window.confirm('Resume your previous in-progress attempt?')) {
-        initialResponses = inProgress.responses || {};
-        setCurrentSectionIndex(inProgress.currentSectionIndex || 0);
-        setCurrentQuestionIndex(inProgress.currentQuestionIndex || 0);
-      } else {
-        clearInProgressTest();
+    const loadData = async () => {
+      const t = await getTestById(testId);
+      if (!t) {
+        toast.error('Test not found');
+        navigate('/tests');
+        return;
       }
-    }
-    
-    setTest(t);
-    
-    const allQIds = t.sections.flatMap(s => s.questionIds);
-    const qs = getQuestionsByIds(allQIds);
-    const qMap = new Map(qs.map(q => [q.id, q]));
-    setQuestionsMap(qMap);
+      
+      // Check for in-progress test
+      const inProgress = await getInProgressTest();
+      let initialResponses = {};
+      
+      if (inProgress && inProgress.testId === testId) {
+        if (window.confirm('Resume your previous in-progress attempt?')) {
+          initialResponses = inProgress.responses || {};
+          setCurrentSectionIndex(inProgress.currentSectionIndex || 0);
+          setCurrentQuestionIndex(inProgress.currentQuestionIndex || 0);
+        } else {
+          await clearInProgressTest();
+        }
+      }
+      
+      setTest(t);
+      
+      const allQIds = t.sections.flatMap(s => s.questionIds);
+      const qs = await getQuestionsByIds(allQIds);
+      const qMap = new Map(qs.map(q => [q.id, q]));
+      setQuestionsMap(qMap);
 
-    // Initialize missing responses
-    const newResponses = { ...initialResponses };
-    allQIds.forEach(qId => {
-      if (!newResponses[qId]) {
-        newResponses[qId] = {
-          selectedOption: null,
-          typedAnswer: null,
-          timeTaken: 0,
-          visitCount: 0,
-          status: 'not-visited'
-        };
+      // Initialize missing responses
+      const newResponses = { ...initialResponses };
+      allQIds.forEach(qId => {
+        if (!newResponses[qId]) {
+          newResponses[qId] = {
+            selectedOption: null,
+            typedAnswer: null,
+            timeTaken: 0,
+            visitCount: 0,
+            status: 'not-visited'
+          };
+        }
+      });
+      
+      // Visit first question
+      const firstQId = t.sections[0].questionIds[0];
+      if (newResponses[firstQId].status === 'not-visited') {
+        newResponses[firstQId].status = 'not-answered';
       }
-    });
-    
-    // Visit first question
-    const firstQId = t.sections[0].questionIds[0];
-    if (newResponses[firstQId].status === 'not-visited') {
-      newResponses[firstQId].status = 'not-answered';
-    }
-    newResponses[firstQId].visitCount += 1;
-    
-    setResponses(newResponses);
-    setIsInitialized(true);
-    questionEnterTimeRef.current = Date.now();
+      newResponses[firstQId].visitCount += 1;
+      
+      setResponses(newResponses);
+      setIsInitialized(true);
+      questionEnterTimeRef.current = Date.now();
+    };
+
+    loadData();
 
     // Prevent accidental leave
     const handleBeforeUnload = (e) => {
@@ -264,7 +268,7 @@ export default function TestInterface() {
   }, [handleNext]);
 
   // Submission
-  const handleSubmitConfirm = () => {
+  const handleSubmitConfirm = async () => {
     // Record final time for current question
     const now = Date.now();
     const timeSpentOnCurrent = Math.floor((now - questionEnterTimeRef.current) / 1000);
@@ -292,8 +296,8 @@ export default function TestInterface() {
       score
     };
 
-    saveAttempt(attempt);
-    clearInProgressTest();
+    await saveAttempt(attempt);
+    await clearInProgressTest();
     
     toast.success('Test submitted successfully!');
     navigate(`/result/${attempt.id}`);

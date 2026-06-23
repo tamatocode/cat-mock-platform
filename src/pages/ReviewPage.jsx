@@ -17,34 +17,39 @@ export default function ReviewPage() {
   const [attempt, setAttempt] = useState(null);
   const [test, setTest] = useState(null);
   const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(true);
   
   const [filter, setFilter] = useState('All');
   const [expandedSections, setExpandedSections] = useState({});
 
   useEffect(() => {
-    const att = getAttemptById(id);
-    if (!att) {
-      navigate('/tests');
-      return;
-    }
-    
-    const t = getTestById(att.testId);
-    if (!t) {
-      navigate('/tests');
-      return;
-    }
+    const loadData = async () => {
+      const att = await getAttemptById(id);
+      if (!att) {
+        navigate('/tests');
+        return;
+      }
+      
+      const t = await getTestById(att.testId);
+      if (!t) {
+        navigate('/tests');
+        return;
+      }
 
-    const allQIds = t.sections.flatMap(s => s.questionIds);
-    const qs = getQuestionsByIds(allQIds);
+      const allQIds = t.sections.flatMap(s => s.questionIds);
+      const qs = await getQuestionsByIds(allQIds);
 
-    setAttempt(att);
-    setTest(t);
-    setQuestions(qs);
+      setAttempt(att);
+      setTest(t);
+      setQuestions(qs);
+      setLoading(false);
 
-    // Expand all sections by default
-    const expanded = {};
-    t.sections.forEach(s => expanded[s.name] = true);
-    setExpandedSections(expanded);
+      // Expand all sections by default
+      const expanded = {};
+      t.sections.forEach(s => expanded[s.name] = true);
+      setExpandedSections(expanded);
+    };
+    loadData();
   }, [id, navigate]);
 
   const toggleSection = (secName) => {
@@ -112,6 +117,16 @@ export default function ReviewPage() {
     });
     return c;
   }, [processedQuestions]);
+
+  if (loading) {
+    return (
+      <PageShell>
+        <div className="flex justify-center items-center h-[60vh]">
+          <div className="w-12 h-12 border-4 border-accent border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </PageShell>
+    );
+  }
 
   if (!attempt || !test) return null;
 

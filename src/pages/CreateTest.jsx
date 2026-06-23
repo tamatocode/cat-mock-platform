@@ -14,7 +14,18 @@ import { generateId, truncateText, cn, SECTIONS, SECTION_INFO, DIFFICULTIES, QUE
 export default function CreateTest() {
   const navigate = useNavigate();
   const toast = useToast();
-  const allQuestions = useMemo(() => getQuestions(), []);
+  
+  const [allQuestions, setAllQuestions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      const qs = await getQuestions();
+      setAllQuestions(qs);
+      setLoading(false);
+    };
+    loadData();
+  }, []);
 
   const [step, setStep] = useState(1);
   const [testInfo, setTestInfo] = useState({
@@ -51,7 +62,7 @@ export default function CreateTest() {
   const hasSelectedQuestions = includedSections.some(s => sectionsConfig[s].selectedIds.size > 0);
   const canGoToStep3 = includedSections.length > 0 && hasSelectedQuestions;
 
-  const handleCreateTest = () => {
+  const handleCreateTest = async () => {
     const finalSections = SECTIONS
       .filter(sec => sectionsConfig[sec].included && sectionsConfig[sec].selectedIds.size > 0)
       .map(sec => ({
@@ -68,7 +79,7 @@ export default function CreateTest() {
       sections: finalSections
     };
 
-    const success = saveTest(newTest);
+    const success = await saveTest(newTest);
     if (success) {
       toast.success('Test created successfully!');
       navigate('/tests');

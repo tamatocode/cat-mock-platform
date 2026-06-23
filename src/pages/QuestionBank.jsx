@@ -29,13 +29,18 @@ export default function QuestionBank() {
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
 
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     loadQuestions();
   }, []);
 
-  const loadQuestions = () => {
-    setQuestions(getQuestions().sort((a, b) => b.createdAt - a.createdAt));
+  const loadQuestions = async () => {
+    setLoading(true);
+    const qs = await getQuestions();
+    setQuestions(qs.sort((a, b) => b.createdAt - a.createdAt));
     setSelectedIds(new Set());
+    setLoading(false);
   };
 
   const filteredQuestions = useMemo(() => {
@@ -64,14 +69,14 @@ export default function QuestionBank() {
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (deleteConfirmId) {
-      deleteQuestion(deleteConfirmId);
+      await deleteQuestion(deleteConfirmId);
       toast.success('Question deleted successfully');
       setDeleteConfirmId(null);
       loadQuestions();
     } else if (bulkDeleteConfirm) {
-      deleteQuestions(Array.from(selectedIds));
+      await deleteQuestions(Array.from(selectedIds));
       toast.success(`${selectedIds.size} questions deleted`);
       setBulkDeleteConfirm(false);
       loadQuestions();
@@ -96,6 +101,16 @@ export default function QuestionBank() {
       ))}
     </div>
   );
+
+  if (loading) {
+    return (
+      <PageShell>
+        <div className="flex justify-center items-center h-64">
+          <div className="w-12 h-12 border-4 border-accent border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </PageShell>
+    );
+  }
 
   if (questions.length === 0) {
     return (
