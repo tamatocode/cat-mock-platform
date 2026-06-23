@@ -1,3 +1,4 @@
+import React from 'react';
 import { cn } from '../../lib/utils';
 import { Loader2 } from 'lucide-react';
 
@@ -57,7 +58,11 @@ export default function Button({
           className="animate-spin shrink-0"
         />
       ) : Icon ? (
-        <Icon size={iconSizes[size]} className="shrink-0" />
+        React.isValidElement(Icon) ? (
+          <span className="shrink-0 flex items-center justify-center">{Icon}</span>
+        ) : (
+          <Icon size={iconSizes[size]} className="shrink-0" />
+        )
       ) : null}
       {children && <span>{children}</span>}
     </button>
